@@ -262,8 +262,8 @@ def show_current_data():
         
         # Update label status
         lbl_status.config(text=f"Data {current_data_index + 1} dari {len(pending_data)}")
-        btn_prev.config(state="normal" if current_data_index > 0 else "disabled")
-        btn_next.config(state="normal" if current_data_index < len(pending_data) - 1 else "disabled")
+        # btn_prev.config(state="normal" if current_data_index > 0 else "disabled")
+        # btn_next.config(state="normal" if current_data_index < len(pending_data) - 1 else "disabled")
     else:
         lbl_status.config(text="Tidak ada data")
 
@@ -397,19 +397,7 @@ def submit_action():
                     message += f"Pol Baca ARI: {pol_baca_val}\n"
                     message += f"Rendemen ARI: {rendemen_val}\n\n"
                     message += f"Response API:\n{response_data['message']}"
-                    show_api_alert(title, message)
-                    
-                    # Pindah ke data berikutnya
-                    if pending_data:
-                        current_data_index += 1
-                        if current_data_index < len(pending_data):
-                            show_current_data()
-                        else:
-                            lbl_status.config(text="Semua data selesai")
-                            append_raw_response("[APP] Semua data telah diproses")
-                    else:
-                        reset_form()
-                        
+                    show_api_alert(title, message)   
                 else:
                     title = "GAGAL"
                     message = f"Gagal mengirim data!\n\n"
@@ -472,8 +460,8 @@ def reset_form():
     pending_data = []
     current_data_index = 0
     lbl_status.config(text="Tidak ada data")
-    btn_prev.config(state="disabled")
-    btn_next.config(state="disabled")
+    # btn_prev.config(state="disabled")
+    # btn_next.config(state="disabled")
     
     entry_nomor_gelas.focus()
 
@@ -527,7 +515,7 @@ def refresh_ports():
 
 # === GUI ===
 root = tk.Tk()
-root.title("Analisa Rendemen Individu")
+root.title("Aplikasi Analisa Rendemen Individu")
 
 # SET ICON UNTUK WINDOW
 if icon_available:
@@ -538,7 +526,7 @@ if icon_available:
         print("[APP] Failed to load custom icon")
 
 # Frame untuk kontrol serial
-frame_control = ttk.LabelFrame(root, text="Kontrol Serial", padding=10)
+frame_control = ttk.LabelFrame(root, text="Kontrol", padding=10)
 frame_control.grid(row=0, column=0, padx=10, pady=10, sticky="ew", columnspan=2)
 
 # Label dan Combobox untuk port COM
@@ -561,12 +549,21 @@ btn_serial.grid(row=0, column=3, padx=5, pady=5)
 ttk.Label(frame_control, text=f"Baudrate: {BAUDRATE}").grid(row=0, column=4, padx=5, pady=5)
 
 # Frame untuk input data
-frame_input = ttk.LabelFrame(root, text="Data Analisa", padding=10)
+frame_input = ttk.LabelFrame(root, text="Data", padding=10)
 frame_input.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
 # Kartu ARI (sebagai barcode)
+def limit_6_characters(new_value):
+    return len(new_value) <= 6
+
+vcmd = (root.register(limit_6_characters), "%P")
 ttk.Label(frame_input, text="Kartu ARI:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
-entry_nomor_gelas = ttk.Entry(frame_input, width=20)
+entry_nomor_gelas = ttk.Entry(
+    frame_input,
+    width=20,
+    validate="key",
+    validatecommand=vcmd
+)
 entry_nomor_gelas.grid(row=0, column=1, padx=5, pady=5)
 entry_nomor_gelas.focus()
 
@@ -575,25 +572,25 @@ lbl_status = ttk.Label(frame_input, text="Tidak ada data")
 lbl_status.grid(row=0, column=2, padx=10, pady=5)
 
 # Brix
-ttk.Label(frame_input, text="Brix ARI (%):").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+ttk.Label(frame_input, text="Brix (%):").grid(row=1, column=0, sticky="w", padx=5, pady=5)
 entry_brix = ttk.Entry(frame_input, width=20)
 entry_brix.grid(row=1, column=1, padx=5, pady=5)
 entry_brix.config(state="readonly")  # Dibaca dari serial
 
 # Pol
-ttk.Label(frame_input, text="Pol ARI (%):").grid(row=2, column=0, sticky="w", padx=5, pady=5)
+ttk.Label(frame_input, text="Pol (%):").grid(row=2, column=0, sticky="w", padx=5, pady=5)
 entry_pol = ttk.Entry(frame_input, width=20)
 entry_pol.grid(row=2, column=1, padx=5, pady=5)
 entry_pol.config(state="readonly")  # Dibaca dari serial
 
 # Pol Baca
-ttk.Label(frame_input, text="Pol Baca ARI:").grid(row=3, column=0, sticky="w", padx=5, pady=5)
+ttk.Label(frame_input, text="Pol Baca:").grid(row=3, column=0, sticky="w", padx=5, pady=5)
 entry_pol_baca = ttk.Entry(frame_input, width=20)
 entry_pol_baca.grid(row=3, column=1, padx=5, pady=5)
 entry_pol_baca.config(state="readonly")  # Dibaca dari serial
 
 # Rendemen
-ttk.Label(frame_input, text="Rendemen ARI (%):").grid(row=4, column=0, sticky="w", padx=5, pady=5)
+ttk.Label(frame_input, text="Rendemen (%):").grid(row=4, column=0, sticky="w", padx=5, pady=5)
 entry_rendemen = ttk.Entry(frame_input, state="readonly", width=20)
 entry_rendemen.grid(row=4, column=1, padx=5, pady=5)
 
@@ -602,23 +599,23 @@ frame_tombol = ttk.LabelFrame(root, text="Aksi", padding=10)
 frame_tombol.grid(row=2, column=0, padx=10, pady=10, sticky="ew", columnspan=2)
 
 # Tombol Load Data
-btn_load = ttk.Button(frame_tombol, text="Load Data", 
-                      command=load_pending_data,
-                      style="Primary.TButton", width=12)
-btn_load.grid(row=0, column=0, padx=5, pady=5)
+# btn_load = ttk.Button(frame_tombol, text="Load Data", 
+#                       command=load_pending_data,
+#                       style="Primary.TButton", width=12)
+# btn_load.grid(row=0, column=0, padx=5, pady=5)
 
 # Tombol Navigasi
-btn_prev = ttk.Button(frame_tombol, text="← Prev", 
-                      command=prev_data,
-                      width=10)
-btn_prev.grid(row=0, column=1, padx=5, pady=5)
-btn_prev.config(state="disabled")
+# btn_prev = ttk.Button(frame_tombol, text="← Prev", 
+#                       command=prev_data,
+#                       width=10)
+# btn_prev.grid(row=0, column=1, padx=5, pady=5)
+# btn_prev.config(state="disabled")
 
-btn_next = ttk.Button(frame_tombol, text="Next →", 
-                      command=next_data,
-                      width=10)
-btn_next.grid(row=0, column=2, padx=5, pady=5)
-btn_next.config(state="disabled")
+# btn_next = ttk.Button(frame_tombol, text="Next →", 
+#                       command=next_data,
+#                       width=10)
+# btn_next.grid(row=0, column=2, padx=5, pady=5)
+# btn_next.config(state="disabled")
 
 # Tombol Submit
 btn_submit = ttk.Button(frame_tombol, text="SEND", 
@@ -632,7 +629,7 @@ btn_reset = ttk.Button(frame_tombol, text="Reset",
 btn_reset.grid(row=0, column=4, padx=5, pady=5)
 
 # Frame untuk output
-frame_output = ttk.LabelFrame(root, text="Console (Debug Only)", padding=10)
+frame_output = ttk.LabelFrame(root, text="Console", padding=10)
 frame_output.grid(row=3, column=0, padx=10, pady=10, sticky="nsew", columnspan=2)
 
 # Raw Response dengan scrollbar
@@ -659,9 +656,9 @@ frame_output.grid_columnconfigure(0, weight=1)
 
 # Styling untuk tombol
 style = ttk.Style()
-style.configure("Primary.TButton", font=('Arial', 10, 'bold'), background='#007bff', foreground='white')
-style.configure("Success.TButton", font=('Arial', 10, 'bold'), background='#28a745', foreground='white')
-style.configure("Danger.TButton", font=('Arial', 10), background='#dc3545', foreground='white')
+style.configure("Primary.TButton", font=('Arial', 10, 'bold'), background='#007bff', foreground='black')
+style.configure("Success.TButton", font=('Arial', 10, 'bold'), background='#28a745', foreground='black')
+style.configure("Danger.TButton", font=('Arial', 10), background='#dc3545', foreground='black')
 
 # Bind Enter key untuk memudahkan input
 def focus_next_widget(event):
@@ -690,9 +687,22 @@ append_raw_response("[APP] Aplikasi Analisa Rendemen Individu dimulai")
 append_raw_response(f"[APP] API: {API_BASE}")
 append_raw_response("[SERIAL] Pilih port COM dan klik 'Start: OFF' untuk menghidupkan")
 append_raw_response("[SERIAL] Klik 'Refresh' untuk memperbarui daftar port COM")
-append_raw_response("[INFO] Klik 'Load Data' untuk mengambil data yang belum diisi")
+# append_raw_response("[INFO] Klik 'Load Data' untuk mengambil data yang belum diisi")
 append_raw_response("[INFO] Console ini hanya untuk debugging")
 append_raw_response("[INFO] Respon API akan ditampilkan di popup alert")
 append_raw_response("="*60)
+
+# === FOOTER / CREDIT ===
+frame_footer = ttk.Frame(root)
+frame_footer.grid(row=4, column=0, columnspan=2, sticky="ew", padx=10, pady=(0, 8))
+
+lbl_credit = ttk.Label(
+    frame_footer,
+    text="- Andik Kurniawan -",
+    font=("Arial", 9),
+    foreground="black"
+)
+lbl_credit.pack(anchor="center")
+root.grid_rowconfigure(4, weight=0)
 
 root.mainloop()
